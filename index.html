@@ -1337,6 +1337,70 @@ window.addEventListener('load', () => {
     }
   }, 1800);
 });
+</script><script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Telegram Web App'ni tekshirish va ID ni olish
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) tg.expand();
+
+    const user = tg ? (tg.initDataUnsafe?.user || null) : null;
+    const MY_TELEGRAM_ID = user ? user.id : null;
+    
+    // SIZNING TELEGRAM ID RAQAMINGIZ
+    const ADMIN_ID = 6323997471; 
+
+    // 2. Agar kirgan foydalanuvchi aynan SIZ bo'lsangiz, panelni ko'rsatish
+    if (MY_TELEGRAM_ID === ADMIN_ID) {
+        createAdminPanel();
+    }
+
+    function createAdminPanel() {
+        const adminDiv = document.createElement('div');
+        adminDiv.id = "admin-panel-container";
+        // Panelning dizayni o'yiningiz ranglariga moslashtirildi
+        adminDiv.style.cssText = "position:fixed; top:20px; right:20px; background:rgba(20, 16, 8, 0.95); border:2px solid #c9a227; padding:15px; z-index:99999; border-radius:8px; box-shadow: 0 0 15px #000; text-align:center; min-width: 220px;";
+        
+        adminDiv.innerHTML = `
+            <h3 style="margin:0 0 10px 0; color:#c9a227; font-family:'Cinzel', serif; font-size: 16px; border-bottom: 1px solid #7a6218; padding-bottom: 5px;">
+                👑 Qirol Paneli
+            </h3>
+            <button onclick="startNextDayAdmin()" style="background:#8b0000; color:#fff; padding:10px 15px; border:1px solid #c9a227; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%; font-family: 'Cinzel', serif; font-size: 14px; transition: 0.2s;">
+                ⏳ Keyingi Kunni Boshlash
+            </button>
+        `;
+        document.body.appendChild(adminDiv);
+    }
+});
+
+// 3. "Keyingi kun" tugmasi bosilganda ishlashi
+async function startNextDayAdmin() {
+    if (!confirm("Turnirning keyingi kuni boshlansinmi? Hamma o'yinchilarga resurs qo'shiladi!")) return;
+
+    try {
+        // Supabase-dagi funksiyani chaqiramiz (O'yiningizdagi supabase o'zgaruvchisi orqali)
+        const { error } = await supabase.rpc('admin_next_turn', {
+            g_inc: 500, // Tilla
+            f_inc: 300, // Don
+            s_inc: 100  // Po'lat
+        });
+
+        if (error) throw error;
+
+        alert("👑 Yangi kun e'lon qilindi! Barcha o'yinchilarga resurslar tarqatildi.");
+
+        // Voqealar xronikasiga tushishi uchun bazaga yozamiz
+        await supabase.from('game_events').insert([{
+            event_type: 'system',
+            title: 'Yangi Kun Boshlandi!',
+            description: 'Qirol yangi kunni e\\'lon qildi. Barcha xonadonlarga tilla, don va po\\'lat tarqatildi.',
+            from_player: '👑 Admin'
+        }]);
+
+    } catch (err) {
+        console.error("Admin Panel Xatosi:", err);
+        alert("Xatolik! Supabase'da SQL funksiyani yaratganingizni tekshiring.");
+    }
+}
 </script>
 </body>
 </html>
